@@ -14,6 +14,21 @@ const config = {
 
 const client = new Client(config);
 
+// Helper function
+const insertRecordIntoTable = (table, attributes) => {
+  const attributeArray = Object.keys(attributes);
+  const attributeString = attributeArray.join(', ');
+  const valueArray = attributeArray.map((key) => {
+    if (key === 'cost_per_night') {
+      attributes[key] *= 100;
+    }
+    return attributes[key];
+  });
+  const dollarString = attributeArray.map((key, index) => `$${index + 1}`).join(', ');
+  const queryString = `INSERT INTO ${table} (${attributeString}) VALUES (${dollarString}) RETURNING *;`;
+  return { queryString, valueArray };
+};
+
 client.connect(() => console.log('connected to db'));
 /// Users
 
@@ -45,17 +60,8 @@ exports.getUserWithId = getUserWithId;
  * @return {Promise<{}>} A promise to the user.
  */
 const addUser = function (user) {
-  const queryString = `INSERT INTO users (name, email, password)
-  VALUES ($1, $2, $3) RETURNING *;`;
-  const newUserInfo = [];
-  for (const elem in user) {
-    newUserInfo.push(user[elem]);
-  }
-  return client.query(queryString, newUserInfo).then((res) => res.rows);
-  // const userId = Object.keys(users).length + 1;
-  // user.id = userId;
-  // users[userId] = user;
-  // return Promise.resolve(user);
+  const { queryString, valueArray } = insertRecordIntoTable('users', user);
+  return client.query(queryString, valueArray).then((res) => res.rows);
 };
 exports.addUser = addUser;
 
@@ -67,7 +73,6 @@ exports.addUser = addUser;
  * @return {Promise<[{}]>} A promise to the reservations.
  */
 const getAllReservations = function (guest_id, limit = 10) {
-  // const queryString = 'SELECT * FROM reservations WHERE guest_id=$1 LIMIT $2;';
   const queryString = `
     SELECT reservations.property_id as id,
     properties.*,
@@ -137,16 +142,7 @@ const getAllProperties = function (options, limit = 10) {
   ORDER BY cost_per_night
   LIMIT $${queryParams.length};`;
 
-  console.log('queryString:', queryString);
-  // console.log('queryParams:', queryParams);
-
-  // const queryString = `SELECT * FROM properties LIMIT $1;`;
   return client.query(queryString, queryParams).then((res) => res.rows);
-  // const limitedProperties = {};
-  // for (let i = 1; i <= limit; i++) {
-  //   limitedProperties[i] = properties[i];
-  // }
-  // return Promise.resolve(limitedProperties);
 };
 exports.getAllProperties = getAllProperties;
 
@@ -156,58 +152,11 @@ exports.getAllProperties = getAllProperties;
  * @return {Promise<{}>} A promise to the property.
  */
 const addProperty = function (property) {
-  // { title: 'Edm',
-  // description: 'Corner Unit',
-  // number_of_bedrooms: '2',
-  // number_of_bathrooms: '2',
-  // parking_spaces: '1',
-  // cost_per_night: '150',
-  // thumbnail_photo_url: 'thumbnail url',
-  // cover_photo_url: 'cover url',
-  // street: '7088',
-  // country: 'CA',
-  // city: 'vancouver',
-  // province: 'BC',
-  // post_code: 'V7S J02',
-  // owner_id: 1004 }
-
-  // let attributeString = '';
-  // let dollarString = '';
-  // const valueString = [];
-  // let count = 1;
-  // for (const key in property) {
-  //   if (key === 'owner_id') {
-  //     attributeString += key;
-  //     dollarString += `$${count++}`;
-  //   } else {
-  //     attributeString += key + ', ';
-  //     dollarString += `$${count++}, `;
-  //   }
-  //   valueString.push(property[key]);
-  // }
-
-  // const queryString = `INSERT INTO properties (${attributeString}) VALUES (${dollarString}) RETURNING *;`;
-
-  const attributeArray = Object.keys(property);
-  const attributeString = attributeArray.join(', ');
-  const valueArray = attributeArray.map((key) => {
-    if (key === 'cost_per_night') {
-      property[key] *= 100;
-    }
-    return property[key];
-  });
-
-  const dollarString = attributeArray.map((key, index) => `$${index + 1}`).join(', ');
-
-  const queryString = `INSERT INTO properties (${attributeString}) VALUES (${dollarString}) RETURNING *;`;
+  const { queryString, valueArray } = insertRecordIntoTable('properties', property);
 
   return client
     .query(queryString, valueArray)
     .then((res) => res.rows)
     .catch();
-  // const propertyId = Object.keys(properties).length + 1;
-  // property.id = propertyId;
-  // properties[propertyId] = property;
-  // return Promise.resolve(property);
 };
 exports.addProperty = addProperty;
