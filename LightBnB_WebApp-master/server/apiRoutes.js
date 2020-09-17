@@ -1,39 +1,42 @@
-module.exports = function(router, database) {
-
+module.exports = function (router, database) {
   router.get('/properties', (req, res) => {
-    database.getAllProperties(req.query, 20)
-    .then(properties => res.send({properties}))
-    .catch(e => {
-      console.error(e);
-      res.send(e)
-    }); 
+    database
+      .getAllProperties(req.query, 20)
+      .then((properties) => res.send({ properties }))
+      .catch((e) => {
+        console.error(e);
+        res.send(e);
+      });
   });
 
   router.get('/reservations', (req, res) => {
     const userId = req.session.userId;
     if (!userId) {
-      res.error("💩");
+      res.error('💩');
       return;
     }
-    database.getAllReservations(userId)
-    .then(reservations => res.send({reservations}))
-    .catch(e => {
-      console.error(e);
-      res.send(e)
-    });
+    database
+      .getAllReservations(userId)
+      // .getAllReservations(4)
+      .then((reservations) => res.send({ reservations }))
+      .catch((e) => {
+        console.error(e);
+        res.send(e);
+      });
   });
 
   router.post('/properties', (req, res) => {
     const userId = req.session.userId;
-    database.addProperty({...req.body, owner_id: userId})
-      .then(property => {
+    database
+      .addProperty({ ...req.body, owner_id: userId })
+      .then((property) => {
         res.send(property);
       })
-      .catch(e => {
+      .catch((e) => {
         console.error(e);
-        res.send(e)
+        res.send(e);
       });
   });
 
   return router;
-}
+};

@@ -1,6 +1,7 @@
 SELECT reservations.property_id as id,
 properties.title as title,
 properties.cost_per_night as cost_per_night,
+properties.thumbnail_photo_url as thumbnail_photo_url,
 reservations.start_date as start_date,
 avg(property_reviews.rating) as average_rating
   FROM reservations
@@ -8,7 +9,7 @@ avg(property_reviews.rating) as average_rating
   JOIN property_reviews ON property_reviews.property_id= properties.id
   WHERE reservations.guest_id=1
     AND reservations.end_date < now()
-  GROUP BY reservations.property_id, properties.title, properties.cost_per_night, reservations.start_date
+  GROUP BY reservations.property_id, properties.title, properties.thumbnail_photo_url, properties.cost_per_night, reservations.start_date
   ORDER BY reservations.start_date
   LIMIT 10;
 
